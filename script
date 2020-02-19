@@ -1,0 +1,97 @@
+#The R code used in present research
+#For violin
+ibrary(ggpubr)
+setwd("C:/Users/HNUmcc/Desktop")
+df <- read.table("123.txt",header = T,sep="\t",na.strings= "NA")
+ggviolin(df, x="group2", y="Shannon",add="point",trim=F,width=1,fill="blue")
+
+#HEATMAP
+library(pheatmap)
+setwd("C:/Users/HNUmcc/Desktop")
+all <- read.table("123.txt",header = T,sep="\t",na.strings= "NA")
+pheatmap(all,cellwidth=12,cellheight=6,fontsize_row=12,fontsize_col=12,cluster_rows=F,cluster_cols=F,filename="dd.pdf",color = colorRampPalette(c("black", "white", "gold"))(50))
+
+#calculate the Spearman coffidence
+library(psych)
+setwd("C:/Users/HNUmcc/Desktop")
+all <- read.table("123.txt",header=T,row.names=1,sep="\t")
+abc <- corr.test(data.frame(all),method="spearman",adjust="none")
+write.table(t(abc$r),"spearmanr.txt",sep="\t")
+write.table(t(abc$p),"spearmanp.txt",sep="\t")
+bcd <- corr.test(data.frame(all),method="pearson",adjust="none")
+write.table(t(bcd$r),"pearsonr1.txt",sep="\t")
+write.table(t(bcd$p),"pearsonp1.txt",sep="\t")
+
+#PCoA
+setwd("C:/Users/HNUmcc/Desktop")
+library(ggplot2)
+aaa <- read.table("123.txt",header = T,row.names = 1,sep="\t")
+ggplot(data=aaa,aes(x=PC1,y=PC2,colour=group))+geom_point(size=4)+theme_bw()
+
+#Boxplot
+library(ggplot2)
+library(ggsignif)
+setwd("C:/Users/HNUmcc/Desktop")
+df <- read.table("123.txt",header = T,sep="\t",na.strings= "NA")
+#dff <- melt(df)
+compaired <- list(c("HN_CRC","Con"),
+                  c("HN_CRC","ref_CRC"),
+                  c("ref_CRC","Con"))
+ggplot(df, aes(x=group, y=value,fill=group)) + geom_boxplot() + geom_point()+theme_bw()+ 
+geom_signif(comparisons = compaired,
+              step_increase = 0.1,
+              map_signif_level = T,
+              test = wilcox.test) +
+  
+#CLR Tansform
+library(compositions)
+setwd("C:/Users/HNUmcc/Desktop")
+all <- read.table("123.txt",header=T,row.names=1,sep="\t")
+abc <- clr(all)
+write.table(abc,"VFDB_clr.txt",sep="\t")
+
+#WILCOX TEST
+setwd("C:/Users/HNUmcc/Desktop")
+all <- read.table("123.txt",header=T,row.names=1,sep="\t")
+g<-factor(rep(1:2,c(6,12)),labels=c("HN_CRC","Con"))
+result<-data.frame(as.character(rownames(all)))
+for (i in 1:nrow(all)){
+  result[i,2] <- kruskal.test(as.numeric(all[i,]), g)$p.value
+}
+write.table(result,"p_value_8.txt",sep="\t",row.names=F,col.names=F)
+
+#Aitchison and Bray-Curtis distance
+setwd("C:/Users/HNUmcc/Desktop")
+all <- read.table("123.txt",header=T,row.names=1,sep="\t")
+library(vegan)
+a <- vegdist(all, method="euclidean")
+aa <- as.matrix(a)
+write.table(aa,"distance.txt",sep="\t")
+
+#Adonis
+setwd("C:/Users/HNUmcc/Desktop")
+all <- read.table("123.txt",header=T,row.names=1,sep="\t")
+a <- read.table("234.txt",header=T,row.names=1,sep="\t")
+library(vegan)
+adonis2(all~ group,data=a,permutations = 999)
+
+#ROC
+library("pROC")
+setwd("C:/Users/HNUmcc/Desktop")
+myData <- read.table("123.txt", header=TRUE, sep="\t")  
+rocobj <- plot.roc(myData$group, myData$value, main="", percent=TRUE,ci=TRUE)
+ciobj <- ci.se(rocobj,specificities=seq(0, 100, 5))
+plot(ciobj, type="shape", col="#1c61b6AA",  print.auc=TRUE)
+text(40,20,paste("AUC = ",formatC(rocobj$auc,digits=2,format="f"),sep=""),pos=4)
+ci.lower<-formatC(rocobj$ci[1],digits=2,format="f")
+ci.upper<-formatC(rocobj$ci[3],digits=2,format="f")
+text(40,10,paste("95% CI: ",ci.lower,"-",ci.upper,sep=""),pos=4)
+
+#Bubble chart
+library(ggplot2)
+setwd("C:/Users/HNUmcc/Desktop")
+all <- read.table("123.txt",header=T,row.names=1,sep="\t")
+pathway = read.table("123.txt",header=TRUE,row.names=1,check.names = FALSE)  
+p = ggplot(pathway,aes(value,pathway))
+p=p + geom_point() 
+ggplot(pathway,aes(value,pathway))+geom_point(aes(colour=ende,size=CRC))
